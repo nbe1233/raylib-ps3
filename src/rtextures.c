@@ -4115,17 +4115,41 @@ Texture2D LoadTextureFromImage(Image image)
 {
     Texture2D texture = { 0 };
 
-    if ((image.width != 0) && (image.height != 0))
+    // Handle buggy PS3 opengl driver and swap endianess
+    Image newimage = ImageCopy(image);
+    switch(newimage.format)
     {
-        texture.id = rlLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps);
+        default:
+	    ImageFormat(&newimage,PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+	    //image.mipmaps
+            int newimage_size = newimage.width * newimage.height * 4;
+            for (int i = 0; i < newimage_size; i+=4)
+            {
+	        char *ptr;
+	        ptr = (char * ) newimage.data;
+	        char r = ptr[i+0];
+	        char g = ptr[i+1];
+	        char b = ptr[i+2];
+	        char a = ptr[i+3];
+	        ptr[i+0] = a;
+	        ptr[i+1] = b;
+	        ptr[i+2] = g;
+	        ptr[i+3] = r;
+            }
+    }
+
+    if ((newimage.width != 0) && (newimage.height != 0))
+    {
+        texture.id = rlLoadTexture(newimage.data, newimage.width, newimage.height, newimage.format, newimage.mipmaps);
     }
     else TRACELOG(LOG_WARNING, "IMAGE: Data is not valid to load texture");
 
-    texture.width = image.width;
-    texture.height = image.height;
-    texture.mipmaps = image.mipmaps;
-    texture.format = image.format;
-
+    texture.width = newimage.width;
+    texture.height = newimage.height;
+    texture.mipmaps = newimage.mipmaps;
+    texture.format = newimage.format;
+    //cleanup
+    UnloadImage(newimage);
     return texture;
 }
 
