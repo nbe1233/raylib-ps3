@@ -48,6 +48,10 @@
 
 // TODO: Include the platform specific libraries
 
+#include <EGL/egl.h>
+#include <sys/time.h>
+#include <sys/time.h>
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -346,9 +350,11 @@ void SwapScreenBuffer(void)
 double GetTime(void)
 {
     double time = 0.0;
-    struct timespec ts = { 0 };
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
+    struct timeval tv = { 0 };
+    struct timezone tz = { 0 };
+    gettimeofday(&tv,&tz);
+    unsigned long long int nanoSeconds = (unsigned long long int)tv.tv_sec  * 1000000000LLU
+                                       + (unsigned long long int)tv.tv_usec *       1000LLU;
 
     time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
 
@@ -473,7 +479,7 @@ int InitPlatform(void)
 
     const EGLint framebufferAttribs[] =
     {
-        EGL_RENDERABLE_TYPE, (rlGetVersion() == RL_OPENGL_ES_30)? EGL_OPENGL_ES3_BIT : EGL_OPENGL_ES2_BIT,      // Type of context support
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,      // Type of context support
         EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
         EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
         EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
@@ -530,13 +536,8 @@ int InitPlatform(void)
     // As soon as we picked a EGLConfig, we can safely reconfigure the ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID
     eglGetConfigAttrib(platform.device, platform.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
 
-    // Android specific call
-    ANativeWindow_setBuffersGeometry(platform.app->window, 0, 0, displayFormat);       // Force use of native display size
 
-    platform.surface = eglCreateWindowSurface(platform.device, platform.config, platform.app->window, NULL);
-
-    // There must be at least one frame displayed before the buffers are swapped
-    eglSwapInterval(platform.device, 1);
+    platform.surface = eglCreateWindowSurface(platform.device, platform.config, NULL, NULL);
 
     EGLBoolean result = eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context);
 
@@ -574,12 +575,6 @@ int InitPlatform(void)
     TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
     TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
     TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
-
-    // TODO: Load OpenGL extensions
-    // NOTE: GL procedures address loader is required to load extensions
-    //----------------------------------------------------------------------------
-    rlLoadExtensions(eglGetProcAddress);
-    //----------------------------------------------------------------------------
 
     // TODO: Initialize input events system
     // It could imply keyboard, mouse, gamepad, touch...
