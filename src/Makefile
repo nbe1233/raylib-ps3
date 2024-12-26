@@ -60,7 +60,7 @@
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
 # Define target platform
-PLATFORM             ?= PLATFORM_DESKTOP
+PLATFORM             ?= PLATFORM_PSL1GHT
 ifeq ($(PLATFORM), PLATFORM_DESKTOP)
     TARGET_PLATFORM   = PLATFORM_DESKTOP_GLFW
 else
@@ -99,7 +99,7 @@ RAYLIB_CONFIG_FLAGS  ?= NONE
 
 # Include raylib modules on compilation
 # NOTE: Some programs like tools could not require those modules
-RAYLIB_MODULE_AUDIO  ?= TRUE
+RAYLIB_MODULE_AUDIO  ?= FALSE
 RAYLIB_MODULE_MODELS ?= TRUE
 RAYLIB_MODULE_RAYGUI ?= FALSE
 
@@ -230,6 +230,13 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     endif
 
 endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_PSL1GHT)
+    PLATFORM_SHELL = sh
+    ifeq ($(strip $(PSL1GHT)),)
+        $(error "Please set PSL1GHT in your environment. export PSL1GHT=<path>")
+    endif
+    include $(PSL1GHT)/ppu_rules
+endif
 
 # Define raylib graphics api depending on selected platform
 # NOTE: By default use OpenGL 3.3 on desktop platforms
@@ -263,7 +270,10 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     # By default use OpenGL ES 2.0 on Android
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
-
+ifeq ($(TARGET_PLATFORM),PLATFORM_PSL1GHT)
+    # By default use OpenGL ES 2.0 on Android
+    GRAPHICS = GRAPHICS_API_OPENGL_ES2
+endif
 # Define default C compiler and archiver to pack library: CC, AR
 #------------------------------------------------------------------------------------------------
 CC = gcc
@@ -309,6 +319,10 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     endif
     # It seems from Android NDK r22 onwards we need to use llvm-ar
     AR = $(ANDROID_TOOLCHAIN)/bin/llvm-ar
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_PSL1GHT)
+    CC = ppu-gcc
+    AR = ppu-ar
 endif
 
 # Define compiler flags: CFLAGS
@@ -406,7 +420,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     # Preprocessor macro definitions
     CFLAGS += -D__ANDROID__ -DPLATFORM_ANDROID -D__ANDROID_API__=$(ANDROID_API_VERSION)
 endif
-
+ifeq ($(TARGET_PLATFORM),PLATFORM_PSL1GHT)
+    CFLAGS+= -mcpu=cell $(MACHDEP)
+endif
 # Define required compilation flags for raylib SHARED lib
 ifeq ($(RAYLIB_LIBTYPE),SHARED)
     # make sure code is compiled as position independent
@@ -504,7 +520,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
         INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/x86_64-linux-android
     endif
 endif
-
+ifeq ($(TARGET_PLATFORM),PLATFORM_PSL1GHT)
+    INCLUDE_PATHS += -I./external/khronos -I$(PORTLIBS)/include
+endif
 # Define library paths containing required libs: LDFLAGS
 # NOTE: This is only required for dynamic library generation
 #------------------------------------------------------------------------------------------------
