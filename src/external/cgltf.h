@@ -1105,6 +1105,7 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 	uint32_t tmp;
 	// Magic
 	memcpy(&tmp, data, 4);
+	tmp = __builtin_bswap32(tmp);
 	if (tmp != GlbMagic)
 	{
 		if (fixed_options.type == cgltf_file_type_invalid)
@@ -1133,6 +1134,7 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 	const uint8_t* ptr = (const uint8_t*)data;
 	// Version
 	memcpy(&tmp, ptr + 4, 4);
+	tmp = __builtin_bswap32(tmp);
 	uint32_t version = tmp;
 	if (version != GlbVersion)
 	{
@@ -1141,6 +1143,7 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 
 	// Total length
 	memcpy(&tmp, ptr + 8, 4);
+	tmp = __builtin_bswap32(tmp);
 	if (tmp > size)
 	{
 		return cgltf_result_data_too_short;
@@ -1156,6 +1159,7 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 	// JSON chunk: length
 	uint32_t json_length;
 	memcpy(&json_length, json_chunk, 4);
+	json_length = __builtin_bswap32(json_length);
 	if (json_length > size - GlbHeaderSize - GlbChunkHeaderSize)
 	{
 		return cgltf_result_data_too_short;
@@ -1163,6 +1167,7 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 
 	// JSON chunk: magic
 	memcpy(&tmp, json_chunk + 4, 4);
+	tmp = __builtin_bswap32(tmp);
 	if (tmp != GlbMagicJsonChunk)
 	{
 		return cgltf_result_unknown_format;
@@ -1181,6 +1186,7 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 		// Bin chunk: length
 		uint32_t bin_length;
 		memcpy(&bin_length, bin_chunk, 4);
+		bin_length = __builtin_bswap32(bin_length);
 		if (bin_length > size - GlbHeaderSize - GlbChunkHeaderSize - json_length - GlbChunkHeaderSize)
 		{
 			return cgltf_result_data_too_short;
@@ -1188,6 +1194,7 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 
 		// Bin chunk: magic
 		memcpy(&tmp, bin_chunk + 4, 4);
+		tmp = __builtin_bswap32(tmp);
 		if (tmp != GlbMagicBinChunk)
 		{
 			return cgltf_result_unknown_format;
