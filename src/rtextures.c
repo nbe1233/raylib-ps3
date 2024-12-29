@@ -4121,20 +4121,12 @@ Texture2D LoadTextureFromImage(Image image)
     {
         default:
 	    ImageFormat(&newimage,PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
-	    //image.mipmaps
-            int newimage_size = newimage.width * newimage.height * 4;
-            for (int i = 0; i < newimage_size; i+=4)
+            int newimage_size = newimage.width * newimage.height;
+            for (int i = 0; i < newimage_size; i++)
             {
-	        char *ptr;
-	        ptr = (char * ) newimage.data;
-	        char r = ptr[i+0];
-	        char g = ptr[i+1];
-	        char b = ptr[i+2];
-	        char a = ptr[i+3];
-	        ptr[i+0] = a;
-	        ptr[i+1] = b;
-	        ptr[i+2] = g;
-	        ptr[i+3] = r;
+	        uint32_t *ptr;
+	        ptr = (uint32_t * ) newimage.data;
+		ptr[i] = __builtin_bswap32(ptr[i]);
             }
     }
 
