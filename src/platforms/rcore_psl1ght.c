@@ -50,7 +50,7 @@
 
 #include <EGL/egl.h>
 #include <sys/time.h>
-#include <sys/time.h>
+#include <io/pad.h>
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -450,6 +450,64 @@ void PollInputEvents(void)
     }
 
     // TODO: Poll input events for current platform
+    padInfo2 padinfo;
+    ioPadGetInfo2(&padinfo);
+    // MAX_GAMEPADS is defined by rcore.c as 4
+    // MAX_PADS is defined by io/pad.h as 7
+    for (int i = 0; i < MAX_GAMEPADS; i++)
+    {
+        if ( ( ( padinfo.port_status[i] >> 0 ) & 0x1) == 1)
+        {
+            // Handle connecting for the first time or reconnecting
+            if (CORE.Input.Gamepad.ready[i] == false)
+            {
+                // Enable pressure sensors for L2 and R2
+                ioPadSetPressMode(i, PAD_PRESS_MODE_ON);
+                TextCopy(CORE.Input.Gamepad.name[i], "PS3 Controller");
+            }
+
+            CORE.Input.Gamepad.ready[i] = true;
+            for ( GamepadButton j = GAMEPAD_BUTTON_LEFT_FACE_UP ; j <= GAMEPAD_BUTTON_RIGHT_THUMB ; j++)
+            {
+                CORE.Input.Gamepad.previousButtonState[i][j] = CORE.Input.Gamepad.currentButtonState[i][j];
+            }
+            padData paddata;
+            ioPadGetData(i, &paddata);
+            //ioPadGetDataExtra(i, &paddata);
+            if (paddata.len != 0)
+            {
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_LEFT_FACE_UP] = paddata.BTN_UP;
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_LEFT_FACE_RIGHT] = paddata.BTN_RIGHT;
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_LEFT_FACE_DOWN] = paddata.BTN_DOWN;
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_LEFT_FACE_LEFT] = paddata.BTN_LEFT;
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_RIGHT_FACE_UP] = paddata.BTN_TRIANGLE;
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_RIGHT_FACE_RIGHT] = paddata.BTN_CIRCLE;
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_RIGHT_FACE_DOWN] = paddata.BTN_CROSS;
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_RIGHT_FACE_LEFT] = paddata.BTN_SQUARE;
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_LEFT_TRIGGER_1] = paddata.BTN_L1;
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_LEFT_TRIGGER_2] = paddata.BTN_L2;
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_RIGHT_TRIGGER_1] = paddata.BTN_R1;
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_RIGHT_TRIGGER_2] = paddata.BTN_R2;
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_MIDDLE_LEFT] = paddata.BTN_SELECT;
+                 //CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_MIDDLE] =
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_MIDDLE_RIGHT] = paddata.BTN_START;
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_LEFT_THUMB] = paddata.BTN_L3;
+                 CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_RIGHT_THUMB] = paddata.BTN_R3;
+
+                 // analog controls
+                 CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_X] = 2.0 * ( (float) paddata.ANA_L_H / 255.0 ) - 1.0;
+                 CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_Y] = 2.0 * ( (float) paddata.ANA_L_V / 255.0 ) - 1.0;
+                 CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_RIGHT_X] = 2.0 * ( (float) paddata.ANA_R_H / 255.0 ) - 1.0;
+                 CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_RIGHT_Y] = 2.0 * ( (float) paddata.ANA_R_V / 255.0 ) - 1.0;
+                 CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_TRIGGER] = 2.0 * ( (float) paddata.PRE_L2 / 255.0 ) - 1.0;
+                 CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_RIGHT_TRIGGER] = 2.0 * ( (float) paddata.PRE_R2 / 255.0 ) - 1.0;
+            }
+        }
+        else
+        {
+            CORE.Input.Gamepad.ready[i] = false;
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------
@@ -581,7 +639,7 @@ int InitPlatform(void)
     // Depending on the platform libraries/SDK it could use a callback mechanism
     // For system events and inputs evens polling on a per-frame basis, use PollInputEvents()
     //----------------------------------------------------------------------------
-    // ...
+    ioPadInit(MAX_PADS);
     //----------------------------------------------------------------------------
 
     // TODO: Initialize timing system
@@ -603,6 +661,7 @@ int InitPlatform(void)
 void ClosePlatform(void)
 {
     // TODO: De-initialize graphics, inputs and more
+    ioPadEnd();
 }
 
 // EOF
