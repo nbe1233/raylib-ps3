@@ -521,7 +521,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_PSL1GHT)
-    INCLUDE_PATHS += -I./external/khronos -I$(PORTLIBS)/include
+    INCLUDE_PATHS += -I./external/khronos  $(LIBPSL1GHT_INC) -I$(PORTLIBS)/include
 endif
 # Define library paths containing required libs: LDFLAGS
 # NOTE: This is only required for dynamic library generation
