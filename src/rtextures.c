@@ -4119,14 +4119,16 @@ Texture2D LoadTextureFromImage(Image image)
     Image newimage = ImageCopy(image);
     switch(newimage.format)
     {
+        case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
+            break;
         default:
-	    ImageFormat(&newimage,PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+            ImageFormat(&newimage,PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
             int newimage_size = newimage.width * newimage.height;
             for (int i = 0; i < newimage_size; i++)
             {
-	        uint32_t *ptr;
-	        ptr = (uint32_t * ) newimage.data;
-		ptr[i] = __builtin_bswap32(ptr[i]);
+                uint32_t *ptr;
+                ptr = (uint32_t * ) newimage.data;
+                ptr[i] = __builtin_bswap32(ptr[i]);
             }
     }
 
