@@ -1539,6 +1539,13 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     // This could be a dangerous approach because different meshes with different shaders can enable/disable some attributes
     if (!rlEnableVertexArray(mesh.vaoId))
     {
+        // PS3: glGetUniformLocation might be bugged so I'll just manually set some values
+        material.shader.locs[SHADER_LOC_VERTEX_POSITION] = 0;
+        material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD01] = 1;
+        material.shader.locs[SHADER_LOC_VERTEX_NORMAL] = 2;
+        material.shader.locs[SHADER_LOC_VERTEX_COLOR] = 3;
+        material.shader.locs[SHADER_LOC_VERTEX_TANGENT] = 4;
+        material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02] = 5;
         // Bind mesh VBO data: vertex position (shader-location = 0)
         rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION]);
         rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_POSITION], 3, RL_FLOAT, 0, 0, 0);
