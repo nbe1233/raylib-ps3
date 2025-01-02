@@ -463,17 +463,18 @@ void PollInputEvents(void)
             {
                 // Enable pressure sensors for L2 and R2
                 ioPadSetPressMode(i, PAD_PRESS_MODE_ON);
-                TextCopy(CORE.Input.Gamepad.name[i], "PS3 Controller");
+                TextCopy(CORE.Input.Gamepad.name[i], "Playstation 3 Controller");
+                CORE.Input.Gamepad.axisCount[i] = 6;
             }
 
             CORE.Input.Gamepad.ready[i] = true;
             for ( GamepadButton j = GAMEPAD_BUTTON_LEFT_FACE_UP ; j <= GAMEPAD_BUTTON_RIGHT_THUMB ; j++)
             {
                 CORE.Input.Gamepad.previousButtonState[i][j] = CORE.Input.Gamepad.currentButtonState[i][j];
+                if (CORE.Input.Gamepad.previousButtonState[i][j]) { CORE.Input.Gamepad.lastButtonPressed = j; }
             }
             padData paddata;
             ioPadGetData(i, &paddata);
-            //ioPadGetDataExtra(i, &paddata);
             if (paddata.len != 0)
             {
                  CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_LEFT_FACE_UP] = paddata.BTN_UP;
