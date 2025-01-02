@@ -51,6 +51,7 @@
 #include <EGL/egl.h>
 #include <sys/time.h>
 #include <io/pad.h>
+#include <sysutil/sysutil.h>
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -450,6 +451,7 @@ void PollInputEvents(void)
     }
 
     // TODO: Poll input events for current platform
+    sysUtilCheckCallback();
     padInfo2 padinfo;
     ioPadGetInfo2(&padinfo);
     // MAX_GAMEPADS is defined by rcore.c as 4
@@ -514,6 +516,17 @@ void PollInputEvents(void)
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
+
+// Handle callbacks from PS3 OS
+static void SystemCallback(uint64_t status, uint64_t param, void * userdata)
+{
+    (void)param;
+    (void)userdata;
+    if(status == SYSUTIL_EXIT_GAME)
+    {
+        CORE.Window.shouldClose = true;
+    }
+}
 
 // Initialize platform: graphics, inputs and more
 int InitPlatform(void)
@@ -641,6 +654,7 @@ int InitPlatform(void)
     // For system events and inputs evens polling on a per-frame basis, use PollInputEvents()
     //----------------------------------------------------------------------------
     ioPadInit(MAX_PADS);
+    sysUtilRegisterCallback(SYSUTIL_EVENT_SLOT0, SystemCallback, NULL);
     //----------------------------------------------------------------------------
 
     // TODO: Initialize timing system
@@ -662,7 +676,27 @@ int InitPlatform(void)
 void ClosePlatform(void)
 {
     // TODO: De-initialize graphics, inputs and more
+    if (platform.device != EGL_NO_DISPLAY)
+    {
+        eglMakeCurrent(platform.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+        if (platform.surface != EGL_NO_SURFACE)
+        {
+            eglDestroySurface(platform.device, platform.surface);
+            platform.surface = EGL_NO_SURFACE;
+        }
+
+        if (platform.context != EGL_NO_CONTEXT)
+        {
+            eglDestroyContext(platform.device, platform.context);
+            platform.context = EGL_NO_CONTEXT;
+        }
+
+        eglTerminate(platform.device);
+        platform.device = EGL_NO_DISPLAY;
+    }
     ioPadEnd();
+    sysUtilUnregisterCallback(SYSUTIL_EVENT_SLOT0);
 }
 
 // EOF
