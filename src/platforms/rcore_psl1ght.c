@@ -613,6 +613,14 @@ int InitPlatform(void)
 
     EGLBoolean result = eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context);
 
+    //Get display size
+    EGLint displayWidth = 0;
+    EGLint displayHeight = 0;
+    eglQuerySurface(platform.device, platform.surface, EGL_WIDTH, &displayWidth);
+    eglQuerySurface(platform.device, platform.surface, EGL_HEIGHT, &displayHeight);
+    CORE.Window.display.width = displayWidth;
+    CORE.Window.display.height = displayHeight;
+
     // Check surface and context activation
     if (result != EGL_FALSE)
     {
