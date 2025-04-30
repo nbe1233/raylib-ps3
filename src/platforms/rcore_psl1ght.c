@@ -620,7 +620,9 @@ int InitPlatform(void)
     eglQuerySurface(platform.device, platform.surface, EGL_HEIGHT, &displayHeight);
     CORE.Window.display.width = displayWidth;
     CORE.Window.display.height = displayHeight;
-
+    // Fullscreen
+    CORE.Window.screen.width = CORE.Window.display.width;
+    CORE.Window.screen.height = CORE.Window.display.height;
     // Check surface and context activation
     if (result != EGL_FALSE)
     {
