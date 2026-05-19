@@ -556,7 +556,7 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
 #elif defined(PLATFORM_ANDROID)
     #include "platforms/rcore_android.c"
 #elif defined(PLATFORM_PSL1GHT)
-    #include "platforms/rcore_psl1ght.c"
+    #include "platforms/rcore_psl1ght_sdl.c"
 #else
     // TODO: Include your custom platform backend!
     // i.e software rendering backend or console backend!
